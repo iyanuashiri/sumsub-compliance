@@ -1,4 +1,8 @@
+import uuid
+
 from django.db import models
+
+from sumsubapp.accounts.models import Account
 
 
 # Create your models here.
@@ -107,7 +111,8 @@ class Applicant(models.Model):
         ('company', 'company'),
         ('individual', 'individual'),
     ]
-    external_id = models.UUIDField()
+    account = models.OneToOneField(Account, on_delete=models.CASCADE)
+    external_id = models.UUIDField(default=uuid.uuid4, editable=False)
     company_info = models.OneToOneField(CompanyInfo, on_delete=models.CASCADE)
     source_key = models.CharField(max_length=100, default='')
     email = models.EmailField(default='')  # not mandatory
@@ -115,6 +120,7 @@ class Applicant(models.Model):
     lang = models.CharField(max_length=2, choices=LANG_CHOICES, default='en')
     fixed_info = models.OneToOneField(FixedInfo, on_delete=models.CASCADE)
     type = models.CharField(max_length=100, choices=TYPE_CHOICES)
+    applicant_id = models.CharField(max_length=50, default='')
 
 
 class Metadata(models.Model):
@@ -159,6 +165,7 @@ class Metadata(models.Model):
 
 
 class Document(models.Model):
-    applicant_id = models.CharField(max_length=100)
+    applicant = models.ForeignKey(Applicant, on_delete=models.CASCADE, related_name='applicant_documents')
+    # applicant_id = models.CharField(max_length=100)
     metadata = models.OneToOneField(Metadata, on_delete=models.CASCADE)
     content = models.FileField()
