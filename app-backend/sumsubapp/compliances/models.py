@@ -118,14 +118,36 @@ class Applicant(models.Model):
 
 
 class Metadata(models.Model):
+    DOC_TYPE_CHOICES = [
+        ('ID_CARD', 'ID_CARD'),
+        ('PASSPORT', 'PASSPORT'),
+        ('DRIVERS', 'DRIVERS'),
+        ('RESIDENCE_PERMIT', 'RESIDENCE_PERMIT'),
+        ('UTILITY_BILL', 'UTILITY_BILL'),
+        ('SELFIE', 'SELFIE'),
+        ('VIDEO_SELFIE', 'VIDEO_SELFIE'),
+        ('PROFILE_IMAGE', 'PROFILE_IMAGE'),
+        ('ID_DOC_PHOTO', 'ID_DOC_PHOTO'),
+        ('AGREEMENT', 'AGREEMENT'),
+        ('CONTRACT', 'CONTRACT'),
+        ('DRIVERS_TRANSLATION', 'DRIVERS_TRANSLATION'),
+        ('INVESTOR_DOC', 'INVESTOR_DOC'),
+        ('VEHICLE_REGISTRATION_CERTIFICATE', 'VEHICLE_REGISTRATION_CERTIFICATE'),
+        ('INCOME_SOURCE', 'INCOME_SOURCE'),
+        ('PAYMENT_METHOD', 'PAYMENT_METHOD'),
+        ('BANK_CARD', 'BANK_CARD'),
+        ('COVID_VACCINATION_FORM', 'COVID_VACCINATION_FORM'),
+        ('OTHER', 'OTHER'),
+    ]
+
     SUB_TYPE_CHOICES = [
         ('FRONT_SIDE', 'FRONT_SIDE'),
         ('BACK_SIDE', 'BACK_SIDE'),
         ('null', 'null'),
     ]
-    id_doc_type = models.CharField(max_length=100)  # Check Document Type
-    id_doc_sub_type = models.CharField(max_length=100)
-    country = models.CharField(max_length=3)
+    id_doc_type = models.CharField(max_length=50, choices=DOC_TYPE_CHOICES)  # Check Document Type
+    id_doc_sub_type = models.CharField(max_length=20, choices=SUB_TYPE_CHOICES)
+    country = models.CharField(max_length=3)  # Alpha-3 country code
     first_name = models.CharField(max_length=100, default='')
     middle_name = models.CharField(max_length=100, default='')
     last_name = models.CharField(max_length=100, default='')
