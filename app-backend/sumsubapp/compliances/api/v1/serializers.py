@@ -99,6 +99,83 @@ class ApplicantSerializer(serializers.ModelSerializer):
         return applicant
 
 
+class FixedInfoReadSerializer(serializers.Serializer):
+    firstName = serializers.CharField()
+    lastName = serializers.CharField()
+
+
+class IdDocSerializer(serializers.Serializer):
+    idDocType = serializers.CharField()
+    country = serializers.CharField()
+    firstName = serializers.CharField()
+    firstNameEn = serializers.CharField()
+    lastName = serializers.CharField()
+    lastNameEn = serializers.CharField()
+    validUntil = serializers.DateField()
+    number = serializers.CharField()
+    dob = serializers.DateField()
+    mrzLine1 = serializers.CharField()
+    mrzLine2 = serializers.CharField()
+    mrzLine3 = serializers.CharField()
+
+
+class InfoSerializer(serializers.Serializer):
+    firstName = serializers.CharField()
+    firstNameEn = serializers.CharField()
+    lastName = serializers.CharField()
+    lastNameEn = serializers.CharField()
+    dob = serializers.DateField()
+    country = serializers.CharField()
+    idDocs = IdDocSerializer(many=True)
+
+
+class AgreementSerializer(serializers.Serializer):
+    createdAt = serializers.DateTimeField()
+    source = serializers.CharField()
+    targets = serializers.ListField(child=serializers.CharField())
+
+
+class DocSetSerializer(serializers.Serializer):
+    idDocSetType = serializers.CharField()
+    types = serializers.ListField(child=serializers.CharField())
+
+
+class RequiredIdDocsSerializer(serializers.Serializer):
+    docSets = DocSetSerializer(many=True)
+
+
+class ReviewResultSerializer(serializers.Serializer):
+    reviewAnswer = serializers.CharField()
+
+
+class ReviewSerializer(serializers.Serializer):
+    elapsedSincePendingMs = serializers.IntegerField()
+    elapsedSinceQueuedMs = serializers.IntegerField()
+    reprocessing = serializers.BooleanField()
+    levelName = serializers.CharField()
+    createDate = serializers.DateTimeField()
+    reviewDate = serializers.DateTimeField()
+    reviewResult = ReviewResultSerializer()
+    reviewStatus = serializers.CharField()
+
+
+class ApplicantReadSerializer(serializers.Serializer):
+    id = serializers.CharField()
+    createdAt = serializers.DateTimeField()
+    clientId = serializers.CharField()
+    inspectionId = serializers.CharField()
+    externalUserId = serializers.CharField()
+    fixedInfo = FixedInfoSerializer()
+    info = InfoSerializer()
+    agreement = AgreementSerializer()
+    email = serializers.EmailField()
+    applicantPlatform = serializers.CharField()
+    requiredIdDocs = RequiredIdDocsSerializer()
+    review = ReviewSerializer()
+    lang = serializers.CharField()
+    type = serializers.CharField()
+
+
 class MetadataSerializer(serializers.ModelSerializer):
     class Meta:
         model = Metadata

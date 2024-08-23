@@ -11,5 +11,7 @@ urlpatterns = [
     path('documents/', views.DocumentCreateView.as_view()),
     path('appliants/', views.ApplicantCreateView.as_view()),
 
+    path('verification-status/', views.VerificationStatusView.as_view()),
+
 
 ]
