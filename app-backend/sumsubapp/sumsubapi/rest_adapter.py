@@ -22,22 +22,7 @@ class Rest:
         self.secret_key = secret_key
         self.base_url = base_url
         self.session = Session()
-
-        now = int(time.time())
-        prepared_request = request.prepare()
-        method = request.method.upper()
-        path_url = prepared_request.path_url
-        body = b'' if prepared_request.body is None else prepared_request.body
-        data_to_sign = str(now).encode('utf-8') + method.encode('utf-8') + path_url.encode('utf-8') + body
-
-        signature = hmac.new(
-            self.secret_key.encode('utf-8'),
-            data_to_sign,
-            digestmod=hashlib.sha256
-        )
-
         self.headers = {'Content-Type': 'application/json', 'X-App-Token': self.app_token,
-                        'X-App-Access-Sig': signature, 'X-App-Access-Ts': str(now),
                         "X-Return-Doc-Warnings": "true",
                         }
 
@@ -50,6 +35,16 @@ class Rest:
         :return:
         """
         full_url = self.base_url + endpoint
+        body = b'' if body is None else body
+        now = int(time.time())
+        data_to_sign = str(now).encode('utf-8') + http_method.encode('utf-8') + full_url.encode('utf-8') + body
+        signature = hmac.new(
+            self.secret_key.encode('utf-8'),
+            data_to_sign,
+            digestmod=hashlib.sha256
+        )
+        self.headers['X-App-Access-Sig'] = signature
+        self.headers['X-App-Access-Ts'] = str(now)
         try:
             response = self.session.request(method=http_method, url=full_url, headers=self.headers, params=params,
                                             data=body)
