@@ -1,7 +1,12 @@
 from rest_framework import serializers
 
+from decouple import config
+
 from sumsubapp.compliances.models import Document, Metadata, Applicant, CompanyInfo, Address, Beneficiary, Position, \
     Image, FixedInfo, FixedInfoAddress
+from sumsubapp.sumsubapi.sumsub_api import SumSubAPI
+
+api = SumSubAPI(app_token=config('SUMSUB_APP_TOKEN'), secret_key=config('SUMSUB_SECRET_KEY'))
 
 
 class PositionSerializer(serializers.ModelSerializer):
@@ -19,6 +24,7 @@ class ImageSerializer(serializers.ModelSerializer):
 class BeneficiarySerializer(serializers.ModelSerializer):
     beneficiary_positions = PositionSerializer(many=True)
     beneficiary_images = ImageSerializer(many=True)
+
     class Meta:
         model = Beneficiary
         fields = ('applicant_id', 'type', 'share_size', 'in_registry', 'beneficiary_positions', 'beneficiary_images')
@@ -32,7 +38,7 @@ class AddressSerializer(serializers.ModelSerializer):
 
 class CompanyInfoSerializer(serializers.ModelSerializer):
     address = AddressSerializer(write_only=True)
-    company_info_beneficiaries = BeneficiarySerializer(many=True)
+    company_info_beneficiaries = BeneficiarySerializer(many=True, write_only=True)
 
     class Meta:
         model = CompanyInfo
@@ -49,7 +55,8 @@ class FixedInfoAddressSerializer(serializers.ModelSerializer):
 
 
 class FixedInfoSerializer(serializers.ModelSerializer):
-    fixed_info_addresses = FixedInfoAddressSerializer(many=True)
+    fixed_info_addresses = FixedInfoAddressSerializer(many=True, write_only=True)
+
     class Meta:
         model = FixedInfo
         fields = ('first_name', 'middle_name', 'last_name', 'legal_name', 'gender', 'dob', 'place_of_birth',
@@ -64,6 +71,33 @@ class ApplicantSerializer(serializers.ModelSerializer):
         model = Applicant
         fields = ('external_id', 'company_info', 'source_key', 'email', 'phone', 'lang', 'fixed_info', 'type')
 
+    def create(self, validated_data):
+        applicant = Applicant.objects.create(**validated_data)
+        response = api.create_applicant(
+            level_name='external_id', external_user_id=applicant.external_id,
+            company_name=applicant.company_info.company_name,
+            registration_number=applicant.company_info.registration_number,
+            company_country=applicant.company_info.country, legal_address=applicant.company_info.legal_address,
+            company_address=applicant.company_info.address, incorporated_on=applicant.company_info.incorporated_on,
+            company_type=applicant.company_info.type, company_email=applicant.company_info.email,
+            company_phone=applicant.company_info.phone, control_scheme=applicant.company_info.control_scheme,
+            tax_id=applicant.company_info.tax_id, registration_location=applicant.company_info.registration_location,
+            website=applicant.company_info.website, postal_address=applicant.company_info.postal_address,
+            beneficiaries=applicant.company_info.company_info_beneficiaries, no_ubos=applicant.company_info.no_ubos,
+            no_shareholders=applicant.company_info.no_shareholders, source_key=applicant.source_key,
+            applicant_email=applicant.email, applicant_phone=applicant.phone, lang=applicant.lang,
+            first_name=applicant.fixed_info.first_name, middle_name=applicant.fixed_info.middle_name,
+            last_name=applicant.fixed_info.last_name, legal_name=applicant.fixed_info.legal_name,
+            gender=applicant.fixed_info.gender, dob=applicant.fixed_info.dob,
+            place_of_birth=applicant.fixed_info.place_of_birth, country_of_birth=applicant.fixed_info.country_of_birth,
+            state_of_birth=applicant.fixed_info.state_of_birth, country=applicant.fixed_info.country,
+            nationality=applicant.fixed_info.nationality, addresses=applicant.fixed_info.fixed_info_addresses,
+            tin=applicant.fixed_info.tin, applicant_type=applicant.type
+        )
+        applicant.applicant_id = response.id
+        applicant.save()
+        return applicant
+
 
 class MetadataSerializer(serializers.ModelSerializer):
     class Meta:
@@ -73,8 +107,22 @@ class MetadataSerializer(serializers.ModelSerializer):
 
 
 class DocumentSerializer(serializers.ModelSerializer):
+    applicant = serializers.PrimaryKeyRelatedField(queryset=Applicant.objects.all())
     metadata = MetadataSerializer(write_only=True)
 
     class Meta:
         model = Document
-        fields = ('applicant_id', 'metadata', 'content')
+        fields = ('applicant', 'metadata', 'content')
+
+    def create(self, validated_data):
+        document = Document.objects.create(**validated_data)
+        api.add_id_document(
+            applicant_id=document.applicant.applicant_id, id_doc_type=document.metadata.id_doc_type,
+            id_doc_sub_type=document.metadata.id_doc_sub_type, country=document.metadata.country,
+            first_name=document.metadata.first_name, middle_name=document.metadata.middle_name,
+            last_name=document.metadata.last_name, issued_date=document.metadata.issued_date,
+            valid_until=document.metadata.valid_until, number=document.metadata.number, dob=document.metadata.dob,
+            place_of_birth=document.metadata.place_of_birth, content=document.content.file
+        )
+        return document
+
