@@ -3,4 +3,5 @@ django-cors-headers==4.2.0
 djangorestframework==3.14.0
 drf-yasg==1.21.7
 python-decouple==3.8
+requests==2.32.3
 shortuuid==1.0.13
